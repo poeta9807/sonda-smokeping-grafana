@@ -1,0 +1,13 @@
+# Lista celów pingowanych co 1 s. Podmień 192.168.1.1 na swoją bramę.
+targets:
+  - hosts:
+      - 192.168.1.1        # brama/router (LAN)
+      - 1.1.1.1            # Cloudflare DNS
+      - 8.8.8.8            # Google DNS
+      - 9.9.9.9            # Quad9
+      - wp.pl
+      - onet.pl
+    interval: 1s
+    network: ip4
+    protocol: icmp
+    size: 56

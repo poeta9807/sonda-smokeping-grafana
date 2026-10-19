@@ -1,0 +1,57 @@
+services:
+  smokeping:
+    image: quay.io/superq/smokeping-prober:latest   # docelowo przypnij wersję z Releases
+    command: ["--config.file=/etc/smokeping_prober.yml"]
+    user: "0:0"                 # ping ICMP wymaga surowych gniazd
+    cap_add: [NET_RAW]
+    volumes:
+      - ./smokeping_prober.yml:/etc/smokeping_prober.yml:ro
+    ports:
+      - "127.0.0.1:9374:9374"   # tylko lokalnie (do testów)
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=90d
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    env_file: .env
+    environment:
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  # Opcjonalnie: Haze (własny interfejs w stylu Smokepinga, :4420).
+  # Usuń tę sekcję, jeśli niepotrzebna.
+  haze:
+    image: ghcr.io/consi/haze:latest
+    environment:
+      - HAZE_BIND=0.0.0.0:4420
+    cap_add: [NET_RAW]
+    sysctls:
+      - net.ipv4.ping_group_range=0 65535
+    ulimits:
+      nofile: 65536
+    volumes:
+      - haze-data:/var/lib/haze
+    ports:
+      - "4420:4420"
+    restart: unless-stopped
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  haze-data:
